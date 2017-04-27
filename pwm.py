@@ -1,18 +1,3 @@
-#!/usr/bin/env python
-
-# Author: Thomas Ingleby <thomas.c.ingleby@intel.com>
-# Copyright (c) 2014 Intel Corporation.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 # EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
@@ -21,12 +6,20 @@
 # LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 from __future__ import print_function
 import mraa
 
 class pwm():
 
     def __init__(self, pin, period=1000, enable=True, min_limit=0., max_limit=1.):
+        """
+        :param pin: IO pin to output the pwm signal
+        :param period: the time period in us between cycles
+        :param enable: True => pwm is enabled on the pin
+        :param min_limit: minimum value (duty cycle) output by the pwm
+        :param max_limit: maximum value (duty cycle) output by the pwm
+        """
         self.pin = pin
         self.period = period
         self.enable = enable
@@ -48,34 +41,58 @@ class pwm():
         self.enable_pwm()
 
     def set_pin(self, pin):
+        """
+        Set the IO pin used for pwm output
+        :param pin: pin number
+        """
         self.pwm = mraa.Pwm(pin)
 
     def set_period(self, period):
+        """
+        set the period in micro seconds (us) of the pwm cycle
+        :param period: int value of the period time
+        """
         self.pwm.period_us(period)
 
     def set_pulsewidth(self, period):
-
-        if period < 0:
-            period = 0
+        """
+        Sets the pwm on time
+        :param period: on time of the wave
+        """
+        if period < self.min_limit * self.period:
+            self.pwm.pulsewidth_us(self.min_limit * self.period)
         elif period > self.max_limit * self.period:
-            period = self.max_limit * self.period
+            self.pwm.pulsewidth_us(self.max_limit * self.period)
         else:
             self.pwm.pulsewidth_us(period)
 
     def enable_pwm(self):
+        """
+        Turn on the pwm channel
+        """
         self.pwm.enable(True)
 
     def disable_pwm(self):
+        """
+        Turn off the pwm channel
+        """
         self.pwm.enable(False)
 
     def write_pulse_duty(self, value):
-
+        """
+        sets the duty cycle for the pwm channel
+        :param value: 0 -> 1, duty cycle value
+        """
         if value < self.min_limit:
-            value = self.min_limit
+            self.pwm.write(self.min_limit)
         elif value > self.max_limit:
-            self.pwm.write(1)
+            self.pwm.write(self.max_limit)
         else:
             self.pwm.write(value)
 
     def read_pulse(self):
+        """
+        Reads the current pwm duty cycle
+        :return: current duty cycle
+        """
         return self.pwm.read()

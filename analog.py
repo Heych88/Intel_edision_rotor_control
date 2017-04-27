@@ -1,19 +1,3 @@
-
-#!/usr/bin/env python
-
-# Author: Brendan Le Foll <brendan.le.foll@intel.com>
-# Copyright (c) 2014 Intel Corporation.
-#
-# Permission is hereby granted, free of charge, to any person obtaining
-# a copy of this software and associated documentation files (the
-# "Software"), to deal in the Software without restriction, including
-# without limitation the rights to use, copy, modify, merge, publish,
-# distribute, sublicense, and/or sell copies of the Software, and to
-# permit persons to whom the Software is furnished to do so, subject to
-# the following conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 # EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
@@ -26,8 +10,15 @@
 import mraa
 
 class analog():
-
+    """
+    class for the analog pins on the Intel Edison boards
+    """
     def __init__(self, pin, resolution=12):
+        """
+        Setup analog channel for use at the desired resolution
+        :param pin: GPIO AD pin used for measuring
+        :param resolution: converter resolution to be used, defult 12-bit
+        """
         self.pin = pin
         if pin not in range (0, 6):
             raise Exception("Incorrect pin selection. Pins available (0, 1, 2, 3, 4, 5)")
@@ -37,10 +28,19 @@ class analog():
         self.setbit(resolution)
 
     def set_pin(self, pin):
+        """
+        initalises the pin for use
+        :param pin: GPIO AD pin used for measuring
+        :return: initalised mraa class for later  reuse
+        """
         self.aio = mraa.Aio(pin)
         return self.aio
 
     def get_counts(self):
+        """
+        reads the current converter counts
+        :return: current converter pin reading
+        """
         count = self.aio.read()
         return count
 
