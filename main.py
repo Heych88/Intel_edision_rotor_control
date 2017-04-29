@@ -10,11 +10,15 @@ import time
 
 import pwm
 import analog
+import gpio
 
 # setup all IOs and global classes
-motor = pwm.pwm(3, period=700)
+motor = pwm.pwm(3, period=1000)
 rotation_count = analog.analog(0)
 motor_analog = analog.analog(1)
+
+led = gpio.gpio(13)
+led.set_high()
 
 AREF = 5
 
@@ -24,7 +28,6 @@ def pwm_update(value):
     time.sleep(0.5)
     value = value + 0.01
 
-    #print("PWM: {}".format(value * 100))
     if value >= 0.75:
         value = 0.1
 
@@ -45,10 +48,14 @@ def main():
 
     except KeyboardInterrupt:
         motor.write_pulse_duty(0)
+        motor.disable_pwm()
+        led.set_low()
         print("Stopping everything")
 
     finally:
         motor.write_pulse_duty(0)
+        motor.disable_pwm()
+        led.set_low()
         print("Stopping everything")
 
 if __name__ == '__main__':
