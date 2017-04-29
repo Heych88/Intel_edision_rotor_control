@@ -32,11 +32,7 @@ class pwm():
         else:
             self.max_limit = max_limit
 
-        if pin not in (3,5,6,11):
-            raise Exception("Incorrect pin selection. Pins available (3, 5, 6, 11)")
-        else:
-            self.set_pin(self.pin)
-
+        self.set_pin(self.pin)
         self.set_period(self.period)
         self.enable_pwm()
 
@@ -45,14 +41,27 @@ class pwm():
         Set the IO pin used for pwm output
         :param pin: pin number
         """
-        self.pwm = mraa.Pwm(pin)
+        if pin not in (3,5,6,9,10,11):
+            raise Exception("Incorrect pin {} selected. Pins available (3, 5, 6, 9, 10, 11)".format(pin))
+        else:
+            self.pin = pin
+            self.pwm = mraa.Pwm(pin)
 
     def set_period(self, period):
         """
         set the period in micro seconds (us) of the pwm cycle
         :param period: int value of the period time
         """
-        self.pwm.period_us(period)
+        self.period = period
+
+        if period >= 1000000:
+            period = period // 1000000
+            print('period ', period)
+            self.pwm.period(period=period)
+        elif period >= 1000:
+            self.pwm.period_ms(period // 1000)
+        else:
+            self.pwm.period_us(period)
 
     def set_pulsewidth(self, period):
         """
@@ -70,12 +79,14 @@ class pwm():
         """
         Turn on the pwm channel
         """
+        self.enable = True
         self.pwm.enable(True)
 
     def disable_pwm(self):
         """
         Turn off the pwm channel
         """
+        self.enable = False
         self.pwm.enable(False)
 
     def write_pulse_duty(self, value):
