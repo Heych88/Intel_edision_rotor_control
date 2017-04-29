@@ -17,13 +17,10 @@ class analog():
         """
         Setup analog channel for use at the desired resolution
         :param pin: GPIO AD pin used for measuring
-        :param resolution: converter resolution to be used, defult 12-bit
+        :param resolution: converter resolution to be used, default 12-bit
         """
         self.pin = pin
-        if pin not in range (0, 6):
-            raise Exception("Incorrect pin selection. Pins available (0, 1, 2, 3, 4, 5)")
-        else:
-            self.aio = self.set_pin(self.pin)
+        self.aio = self.set_pin(self.pin)
 
         self.setbit(resolution)
 
@@ -33,7 +30,10 @@ class analog():
         :param pin: GPIO AD pin used for measuring
         :return: initalised mraa class for later  reuse
         """
-        self.aio = mraa.Aio(pin)
+        if pin not in range (0, 6):
+            raise Exception("Incorrect pin selection. Pins available (0, 1, 2, 3, 4, 5)")
+        else:
+            self.aio = mraa.Aio(pin)
         return self.aio
 
     def get_counts(self):
