@@ -11,6 +11,7 @@ import time
 import pwm
 import analog
 import gpio
+import controller
 
 # setup all IOs and global classes
 motor = pwm.pwm(3, period=1000)
@@ -22,29 +23,77 @@ led.set_high()
 
 AREF = 5
 
-def pwm_update(value):
+def pwm_update(pid, target, time_limit):
+    # run the system
+    start_time = time.time()
+    current_time = 0
+    run_error = 0
 
-    motor.write_pulse_duty(value)
-    time.sleep(0.5)
-    value = value + 0.01
+    while current_time < time_limit:
+        measurement = rotation_count.get_counts()
+        value = -1 * pid.update(measurement)
+        if value >= 1:
+            value = 1
+        run_error = measurement - target
+        motor.write_pulse_duty(value)
 
-    if value >= 0.75:
-        value = 0.1
+        current_time = time.time() - start_time
 
-    return value
+    motor.write_pulse_duty(0)
+    print(run_error)
+
+    return run_error
+
+def twiddle(target, time_limit, tol=0.2):
+    # Don't forget to call `make_robot` before you call `run`!
+    p = [0, 0, 0]
+    dp = [1, 1, 1]
+    pid = controller.PID(p[0], p[1], p[2])
+    pid.set_desired(target)
+
+    best_error = rotation_count.get_counts()
+    run_error = 0
+
+    while sum(dp) > tol:
+        for i in range(len(p)):
+            p[i] += dp[i]
+
+            # Reset the PID controller with the new parameters
+            pid.clear_PID()  # re - initalise the controller
+            pid.Kp = p[0]
+            pid.ki = p[1]
+            pid.kd = p[2]
+
+            pwm_update(pid, target, time_limit)
+
+            if (run_error < best_error):
+                # the parameters are better
+                best_err = run_error
+                dp[i] *= 1.1
+            else:
+                # parameters are worse
+                dp[i] -= 2 * dp[i]
+
+                if (run_error < best_error):
+                    best_err = run_error
+                    dp[i] *= 1.1
+                else:
+                    p[i] += dp[i]
+                    dp[i] *= 0.9
+
+    return p, best_error
 
 def main():
     try:
         value = 0.1
-        while True:
-            value = pwm_update(value)
+        #while True:
 
-            try:
-                rot_count = rotation_count.get_counts()
-                motor_voltage = motor_analog.get_float() * AREF
-            except:
-                print("Are you sure you have an ADC?")
-            print("Position count: {},  Motor voltage: {:.3f}".format(rot_count, motor_voltage))
+        #try:
+        p, best_error = twiddle(535, 5)
+        #motor_voltage = motor_analog.get_float() * AREF
+        #except:
+        #    print("Are you sure you have an ADC?")
+        print("Gains: {},  error: {}".format(p, best_error))
 
     except KeyboardInterrupt:
         motor.write_pulse_duty(0)
