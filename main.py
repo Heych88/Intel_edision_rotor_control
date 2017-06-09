@@ -39,8 +39,10 @@ def pwm_update(pid, target, time_limit):
 
         current_time = time.time() - start_time
 
+
     motor.write_pulse_duty(0)
     print(run_error)
+    time.sleep(1.5)
 
     return run_error
 
@@ -88,8 +90,15 @@ def main():
         value = 0.1
         #while True:
 
+        pid = controller.PID(0.001, 0, 0)
+        pid.set_desired(530)
+
+        pwm_update(pid, 530, 10)
+
+        best_error = rotation_count.get_counts()
+
         #try:
-        p, best_error = twiddle(535, 5)
+        #p, best_error = twiddle(535, 5)
         #motor_voltage = motor_analog.get_float() * AREF
         #except:
         #    print("Are you sure you have an ADC?")
